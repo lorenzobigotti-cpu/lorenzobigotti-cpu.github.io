@@ -911,6 +911,7 @@ function centraSuPosizione() {
       const userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
       posUtenteCorrente = userPos;
       window.posUtenteCorrente = userPos;
+      console.log('posizione salvata:', userPos);
       if (map) {
         map.setCenter(userPos);
         map.setZoom(15);
