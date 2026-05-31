@@ -3,7 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#2563eb">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="PeeMap">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>PeeMap</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1826,6 +1832,89 @@ aggiornaBadgeNotifiche();
     </div>
   </div>
 </div>
+
+
+<!-- INSTALL BANNER -->
+<div id="installBanner" style="display:none;position:fixed;bottom:5rem;left:50%;transform:translateX(-50%);width:calc(100% - 2rem);max-width:390px;background:#fff;border:1px solid var(--border);border-radius:16px;padding:1rem;box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:300;align-items:center;gap:0.85rem;">
+  <div style="width:44px;height:44px;border-radius:12px;background:var(--blue);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+    <svg viewBox="0 0 24 28" xmlns="http://www.w3.org/2000/svg" style="width:24px;height:24px;"><path d="M12 1C6.5 1 2 5.5 2 11c0 7 10 17 10 17s10-10 10-17C22 5.5 17.5 1 12 1z" fill="white"/></svg>
+  </div>
+  <div style="flex:1;">
+    <div style="font-size:0.85rem;font-weight:700;margin-bottom:0.15rem;">Installa PeeMap</div>
+    <div style="font-size:0.75rem;color:var(--text2);">Aggiungila alla home per usarla come un'app vera!</div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:0.4rem;">
+    <button onclick="installaPWA()" style="padding:0.45rem 0.85rem;border-radius:8px;background:var(--blue);color:#fff;border:none;font-family:Inter,sans-serif;font-size:0.78rem;font-weight:600;cursor:pointer;white-space:nowrap;">Installa</button>
+    <button onclick="chiudiBanner()" style="padding:0.45rem 0.85rem;border-radius:8px;background:var(--bg);color:var(--text2);border:1px solid var(--border);font-family:Inter,sans-serif;font-size:0.78rem;cursor:pointer;">Non ora</button>
+  </div>
+</div>
+
+<script>
+// ── SERVICE WORKER ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/peemap/sw.js')
+      .then(reg => {
+        console.log('SW registrato:', reg.scope);
+        window.swRegistration = reg;
+        // Richiedi permesso notifiche dopo login
+        richiediNotifiche();
+      })
+      .catch(err => console.log('SW errore:', err));
+  });
+}
+
+// ── NOTIFICHE PUSH ──
+async function richiediNotifiche() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'granted') return;
+  if (Notification.permission === 'denied') return;
+  // Aspetta 30 secondi prima di chiedere
+  setTimeout(async () => {
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      showToast('Notifiche attivate! Ti ricorderemo le recensioni 🔔');
+    }
+  }, 30000);
+}
+
+// ── INSTALL BANNER ──
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Mostra banner dopo 60 secondi
+  setTimeout(() => mostraBannerInstalla(), 60000);
+});
+
+function mostraBannerInstalla() {
+  if (!deferredPrompt) return;
+  const banner = document.getElementById('installBanner');
+  if (banner) banner.style.display = 'flex';
+}
+
+function installaPWA() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(result => {
+    if (result.outcome === 'accepted') {
+      showToast('PeeMap installata! Cercala sulla home 🎉');
+    }
+    deferredPrompt = null;
+    document.getElementById('installBanner').style.display = 'none';
+  });
+}
+
+function chiudiBanner() {
+  document.getElementById('installBanner').style.display = 'none';
+}
+
+window.addEventListener('appinstalled', () => {
+  showToast('PeeMap installata con successo! 🎉');
+  deferredPrompt = null;
+});
+</script>
 
 </body>
 </html>
