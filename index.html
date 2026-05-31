@@ -910,6 +910,7 @@ function centraSuPosizione() {
     (pos) => {
       const userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
       posUtenteCorrente = userPos;
+      window.posUtenteCorrente = userPos;
       if (map) {
         map.setCenter(userPos);
         map.setZoom(15);
@@ -973,7 +974,8 @@ function toggleSatellite() {
   }
 }
 
-let map = null;
+window.map = null;
+let map = window.map;
 let mapMarkers = [];
 let userMarker = null;
 let infoWindow = null;
@@ -984,7 +986,8 @@ const PIN_SVG_RED = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 48"
 const PIN_SVG_AMBER = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 48" width="40" height="48"><path d="M20 2C12 2 5 9 5 17c0 11 15 29 15 29s15-18 15-29C35 9 28 2 20 2z" fill="#d97706" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.3))"/><circle cx="20" cy="17" r="11" fill="white"/><text x="20" y="22" text-anchor="middle" font-size="13">🚻</text></svg>`;
 
 
-let posUtenteCorrente = null;
+window.posUtenteCorrente = null;
+let posUtenteCorrente = window.posUtenteCorrente;
 
 function aggiornListaPerArea() {
   if (!map) { renderLista(tuttiBagni); return; }
@@ -1020,7 +1023,7 @@ function initMap() {
   // Default center: Rome (will update with geolocation)
   const defaultCenter = { lat: 41.9028, lng: 12.4964 };
   
-  map = new google.maps.Map(document.getElementById('googleMap'), {
+  map = window.map = new google.maps.Map(document.getElementById('googleMap'), {
     zoom: 15,
     center: defaultCenter,
     mapTypeId: google.maps.MapTypeId.HYBRID,
