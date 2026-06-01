@@ -1878,5 +1878,77 @@ window.addEventListener('appinstalled', () => {
 });
 </script>
 
+<script>
+// ── SWIPE DOWN TO CLOSE ──
+// Applica il gesto swipe-down su tutti i bottom sheet
+function applicaSwipeDown(sheetEl, closeFn) {
+  let startY = 0;
+  let currentY = 0;
+  let dragging = false;
+
+  sheetEl.addEventListener('touchstart', (e) => {
+    // Inizia solo se il touch parte dal handle o dalla parte alta della sheet
+    startY = e.touches[0].clientY;
+    dragging = true;
+    sheetEl.style.transition = 'none';
+  }, { passive: true });
+
+  sheetEl.addEventListener('touchmove', (e) => {
+    if (!dragging) return;
+    currentY = e.touches[0].clientY;
+    const delta = currentY - startY;
+    if (delta > 0) {
+      // Trascina verso il basso: segui il dito
+      sheetEl.style.transform = `translateY(${delta}px)`;
+    }
+  }, { passive: true });
+
+  sheetEl.addEventListener('touchend', () => {
+    if (!dragging) return;
+    dragging = false;
+    sheetEl.style.transition = '';
+    const delta = currentY - startY;
+    if (delta > 80) {
+      // Soglia superata: chiudi
+      sheetEl.style.transform = 'translateY(100%)';
+      setTimeout(() => {
+        sheetEl.style.transform = '';
+        closeFn();
+      }, 300);
+    } else {
+      // Torna su
+      sheetEl.style.transform = '';
+    }
+  });
+}
+
+// Attendi che il DOM sia pronto poi applica a tutte le sheet
+window.addEventListener('DOMContentLoaded', () => {
+  // Sheet dettaglio bagno (dinamica — usa MutationObserver)
+  const detSheet = document.getElementById('detSheet');
+  if (detSheet) {
+    applicaSwipeDown(detSheet, () => document.getElementById('detOv').classList.remove('show'));
+  }
+
+  // Sheet aggiungi bagno
+  const addOvSheet = document.querySelector('#addOv .sheet');
+  if (addOvSheet) {
+    applicaSwipeDown(addOvSheet, () => document.getElementById('addOv').classList.remove('show'));
+  }
+
+  // Sheet profilo
+  const profileSheet = document.querySelector('#profileSheet .sheet');
+  if (profileSheet) {
+    applicaSwipeDown(profileSheet, () => document.getElementById('profileSheet').classList.remove('show'));
+  }
+
+  // Sheet recensione
+  const revSheet = document.querySelector('.rev-sheet');
+  if (revSheet) {
+    applicaSwipeDown(revSheet, () => closeRevPopup());
+  }
+});
+</script>
+
 </body>
 </html>
