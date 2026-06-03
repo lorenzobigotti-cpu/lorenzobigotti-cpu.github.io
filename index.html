@@ -764,6 +764,24 @@ async function doSubmit() {
   if (!nome) { showToast('Inserisci il nome del luogo'); return; }
   if (!lat || !lng) { showToast('Cerca e seleziona l\'indirizzo dalla lista'); return; }
 
+  // Controllo duplicati: esiste già un bagno entro 30 metri?
+  const duplicato = controllaDuplicati(lat, lng);
+  if (duplicato) {
+    const idx = tuttiBagni.findIndex(b => b.id == duplicato.id);
+    if (confirm(`⚠️ "${duplicato.nome}" è già presente a pochi metri da qui.\n\nVuoi aggiungere una recensione invece di inserirlo di nuovo?`)) {
+      document.getElementById('addOv').classList.remove('show');
+      if (idx !== -1) {
+        setTimeout(() => {
+          openDetail(idx);
+          setTimeout(() => avviaRecensioneDiretta(idx), 400);
+        }, 300);
+      }
+      return;
+    }
+    // Se clicca "Annulla" sul confirm, non fa nulla — l'utente può correggere
+    return;
+  }
+
   const btn = document.getElementById('submitBtn');
   btn.disabled = true;
   btn.textContent = 'Salvataggio...';
@@ -833,6 +851,7 @@ function openDetail(i) {
       <div class="divider"></div>
       <div class="det-ctas">
         <button class="btn-nav" onclick="portaMiLi(tuttiBagni[currentDetailIndex])"><svg viewBox="0 0 24 24"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>Portami lì</button>
+        <button class="btn-nav" onclick="avviaRecensioneDiretta(currentDetailIndex)" style="background:var(--green);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Recensisci</button>
         <button class="heart-btn" id="heartBtn" onclick="togglePreferito(currentDetailIndex)"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></button>
         <button class="btn-share"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
       </div>
@@ -1651,7 +1670,28 @@ function marcaRecensito(bagnoId) {
 }
 
 // Hook into "Portami lì" button — trigger visit monitoring
-function portaMiLi(bagno) {
+function avviaRecensioneDiretta(idx) {
+  if (!window.utenteCorrente) {
+    showToast('Accedi per lasciare una recensione 👤');
+    return;
+  }
+  const bagno = tuttiBagni[idx];
+  if (!bagno) return;
+  document.getElementById('detOv').classList.remove('show');
+  setTimeout(() => mostraRevPopup(bagno), 300);
+}
+
+function controllaDuplicati(lat, lng) {
+  const SOGLIA_METRI = 30;
+  return tuttiBagni.find(b => {
+    const bLat = parseFloat(b.lat);
+    const bLng = parseFloat(b.lng);
+    if (isNaN(bLat) || isNaN(bLng)) return false;
+    return calcolaDistanza(parseFloat(lat), parseFloat(lng), bLat, bLng) < SOGLIA_METRI;
+  });
+}
+
+
   if (!bagno) return;
   closeRevPopup();
   avviaMonitoraggioVisita(bagno);
