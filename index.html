@@ -1646,21 +1646,50 @@ function portaMiLi(bagno) {
 
 function controllaLocalizzazione() {
   if (!navigator.geolocation) return;
+  // Se l'utente ha già visto il popup e scelto, non mostrarlo più
+  if (localStorage.getItem('peemap_loc_asked')) return;
   navigator.permissions.query({ name: 'geolocation' }).then(result => {
-    if (result.state === 'denied' || result.state === 'prompt') {
-      setTimeout(() => document.getElementById('locPopup').classList.add('show'), 1500);
+    if (result.state === 'granted') return; // posizione già attiva, nessun popup
+    if (result.state === 'denied') {
+      // Permesso negato: mostra popup con istruzioni specifiche
+      setTimeout(() => mostraLocPopup(true), 1500);
+    } else {
+      // 'prompt': chiedi direttamente, se rifiuta mostra istruzioni
+      navigator.geolocation.getCurrentPosition(
+        () => {}, // concesso, tutto ok
+        () => setTimeout(() => mostraLocPopup(true), 1500)
+      );
     }
   }).catch(() => {
-    // Fallback: prova direttamente
     navigator.geolocation.getCurrentPosition(
       () => {},
-      () => setTimeout(() => document.getElementById('locPopup').classList.add('show'), 1500)
+      () => setTimeout(() => mostraLocPopup(false), 1500)
     );
   });
 }
 
+function mostraLocPopup(negato) {
+  if (localStorage.getItem('peemap_loc_asked')) return;
+  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  const isAndroid = /Android/.test(navigator.userAgent);
+  let istruzioni = '';
+  if (negato) {
+    if (isIOS) {
+      istruzioni = 'Per attivare la posizione: <strong>Impostazioni → Privacy → Servizi di localizzazione → Safari → Durante l\'uso</strong>';
+    } else if (isAndroid) {
+      istruzioni = 'Per attivare la posizione: <strong>Impostazioni → App → Chrome → Autorizzazioni → Posizione → Consenti</strong>';
+    } else {
+      istruzioni = 'Controlla le impostazioni del browser e assicurati che la posizione sia abilitata per <strong>peemap.org</strong>';
+    }
+  }
+  const card = document.querySelector('#locPopup .loc-card-text');
+  if (card && istruzioni) card.innerHTML = istruzioni;
+  document.getElementById('locPopup').classList.add('show');
+}
+
 function richiediPosizione() {
   chiudiLocPopup();
+  localStorage.setItem('peemap_loc_asked', '1');
   navigator.geolocation.getCurrentPosition(
     (pos) => {
       if (map) {
@@ -1675,6 +1704,7 @@ function richiediPosizione() {
 
 function chiudiLocPopup() {
   document.getElementById('locPopup').classList.remove('show');
+  localStorage.setItem('peemap_loc_asked', '1');
 }
 
 function condividi(bagno) {
