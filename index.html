@@ -80,6 +80,7 @@
     const sheet = document.getElementById('profileContent');
     if (!sheet) return;
     if (user) {
+      const nomeUtente = user.displayName || user.email || 'Utente';
       sheet.innerHTML = `
         <div style="text-align:center;padding:1rem 0 1.5rem;">
           ${user.photoURL ? `<img src="${user.photoURL}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;margin-bottom:0.75rem;border:3px solid var(--blue-mid);">` : `<div style="width:72px;height:72px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;margin:0 auto 0.75rem;font-size:1.8rem;color:#fff;">${user.displayName?user.displayName[0].toUpperCase():'U'}</div>`}
@@ -87,15 +88,34 @@
           <div style="font-size:0.8rem;color:var(--text2);margin-top:0.2rem;">${user.email}</div>
         </div>
         <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:0.85rem;margin-bottom:0.75rem;display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:0.85rem;font-weight:600;">I tuoi bagni aggiunti</span>
-          <span style="font-size:0.85rem;color:var(--blue);font-weight:700;">0</span>
+          <span style="font-size:0.85rem;font-weight:600;">🚻 Bagni aggiunti</span>
+          <span id="stat-bagni" style="font-size:0.85rem;color:var(--blue);font-weight:700;">…</span>
+        </div>
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:0.85rem;margin-bottom:0.75rem;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:0.85rem;font-weight:600;">⭐ Recensioni scritte</span>
+          <span id="stat-recensioni" style="font-size:0.85rem;color:var(--blue);font-weight:700;">…</span>
         </div>
         <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:0.85rem;margin-bottom:1.25rem;display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:0.85rem;font-weight:600;">Le tue recensioni</span>
-          <span style="font-size:0.85rem;color:var(--blue);font-weight:700;">0</span>
+          <span style="font-size:0.85rem;font-weight:600;">❤️ Bagni salvati</span>
+          <span id="stat-preferiti" style="font-size:0.85rem;color:var(--blue);font-weight:700;">${getPreferiti().length}</span>
         </div>
         <button onclick="window.logoutGoogle()" style="width:100%;padding:0.85rem;border-radius:12px;background:var(--red-light);border:1px solid var(--red);color:var(--red);font-family:Inter,sans-serif;font-size:0.875rem;font-weight:700;cursor:pointer;">Esci dall'account</button>
       `;
+      // Carica contatori reali dall'API
+      fetch(`${API}?action=getStatistiche&utente=${encodeURIComponent(nomeUtente)}`)
+        .then(r => r.json())
+        .then(data => {
+          const elB = document.getElementById('stat-bagni');
+          const elR = document.getElementById('stat-recensioni');
+          if (elB) elB.textContent = data.bagni ?? 0;
+          if (elR) elR.textContent = data.recensioni ?? 0;
+        })
+        .catch(() => {
+          const elB = document.getElementById('stat-bagni');
+          const elR = document.getElementById('stat-recensioni');
+          if (elB) elB.textContent = '—';
+          if (elR) elR.textContent = '—';
+        });
     } else {
       sheet.innerHTML = `
         <div style="text-align:center;padding:1rem 0 1.5rem;">
