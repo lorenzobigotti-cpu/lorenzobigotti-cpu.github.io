@@ -741,6 +741,23 @@ function setNav(el){document.querySelectorAll('.nitem').forEach(n=>n.classList.r
 function togExcl(el){el.closest('.tog-g').querySelectorAll('.tog').forEach(t=>t.classList.remove('on'));el.classList.add('on');}
 function setR(n){ratingSelezionato=n;document.querySelectorAll('.rstar').forEach((s,i)=>s.classList.toggle('on',i<n));}
 
+function resetFormAggiunta() {
+  document.getElementById("f-nome").value = "";
+  document.getElementById("f-indirizzo").value = "";
+  document.getElementById("f-citta").value = "";
+  document.getElementById("f-lat").value = "";
+  document.getElementById("f-lng").value = "";
+  document.getElementById("f-orario").value = "";
+  document.getElementById("f-recensione").value = "";
+  document.getElementById("f-tipo").selectedIndex = 0;
+  document.getElementById("tog-gratis").classList.add("on");
+  ["svc-accessibile","svc-fasciatoio","svc-sapone","svc-asciugamani"].forEach(function(id) {
+    document.getElementById(id).classList.remove("on");
+  });
+  ratingSelezionato = 0;
+  document.querySelectorAll(".rstar").forEach(function(s) { s.classList.remove("on"); });
+}
+
 function openProfile() {
   document.getElementById('profileSheet').classList.add('show');
   if (window.aggiornaProfiloSheet) window.aggiornaProfiloSheet(window.utenteCorrente || null);
@@ -810,6 +827,7 @@ async function doSubmit() {
     await fetch(`${API}?${params.toString()}`);
     document.getElementById('addOv').classList.remove('show');
     showToast('Bagno aggiunto con successo!');
+    resetFormAggiunta();
     await caricaBagni(); // ricarica lista
   } catch(e) {
     showToast('Errore. Riprova tra poco.');
@@ -1092,7 +1110,6 @@ function initAutocomplete() {
 
   const autocomplete = new google.maps.places.Autocomplete(input, {
     types: ['establishment', 'geocode'],
-    componentRestrictions: { country: 'it' },
     fields: ['geometry', 'formatted_address', 'address_components', 'name']
   });
 
@@ -1231,7 +1248,6 @@ function initCercaAutocomplete() {
 
   cercaAutocomplete = new google.maps.places.Autocomplete(input, {
     types: ['geocode', 'establishment'],
-    componentRestrictions: { country: 'it' },
     fields: ['geometry', 'formatted_address', 'name']
   });
 
